@@ -27,7 +27,7 @@
   <button id="b1" type="button" aria-pressed="true">1 Entree</button>
   <button id="b2" type="button" aria-pressed="false">2 Rauwkostschap</button>
   <button id="motion" type="button" hidden>Bewegingssensor aanzetten</button>
-  <span class="hint" id="hint">Sleep of draai je telefoon. Kijk naar de oranje stip om verder te lopen.</span>
+  <span class="hint" id="hint">Sleep of draai je telefoon. Tik op de oranje stip (of kijk er 1 s naar) om verder te lopen.</span>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"></script>
@@ -55,6 +55,7 @@
     <a-ring color="#f2a900" radius-inner="0.18" radius-outer="0.26" material="shader: flat; opacity: .9" class="clickable" data-go="2"
             animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"></a-ring>
     <a-circle color="#f2a900" radius="0.1" material="shader: flat" class="clickable" data-go="2"></a-circle>
+    <a-circle radius="0.8" material="shader: flat; opacity: 0.001; transparent: true; depthWrite: false" class="clickable" data-go="2"></a-circle>
   </a-entity>
 
   <!-- Scène 2: labels boven de drie zones + stip om terug te lopen (links, richting de kratten) -->
@@ -66,6 +67,7 @@
       <a-ring color="#f2a900" radius-inner="0.18" radius-outer="0.26" material="shader: flat; opacity: .9" class="clickable" data-go="1"
               animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"></a-ring>
       <a-circle color="#f2a900" radius="0.1" material="shader: flat" class="clickable" data-go="1"></a-circle>
+      <a-circle radius="0.8" material="shader: flat; opacity: 0.001; transparent: true; depthWrite: false" class="clickable" data-go="1"></a-circle>
     </a-entity>
   </a-entity>
 
@@ -103,7 +105,7 @@
       return new Promise(function (res) {
         var done = function () { video.removeEventListener('ended', done); res(); };
         video.addEventListener('ended', done);
-        video.currentTime = 0;
+        try { video.currentTime = 0; } catch (e) { /* nog geen metadata: gewoon vanaf het begin spelen */ }
         plane.setAttribute('visible', true);
         plane.setAttribute('material', 'opacity', 1);
         var p = video.play();
@@ -114,16 +116,18 @@
     async function go(n) {
       if (busy || n === current) return;
       busy = true;
-      await fade(1, 350);
-      if (n === 2) {                       // vooruit: met loopclip
-        pano.setAttribute('visible', false);
-        await fade(0, 250);
-        await playWalk();
-        await fade(1, 250);
-        plane.setAttribute('visible', false);
-        plane.setAttribute('material', 'opacity', 0);
-        pano.setAttribute('visible', true);
-      }
+      try {
+        await fade(1, 350);
+        if (n === 2) {                       // vooruit: met loopclip
+          pano.setAttribute('visible', false);
+          await fade(0, 250);
+          await playWalk();
+          await fade(1, 250);
+        }
+      } catch (e) { /* clip mislukt: dan zonder overgang door */ }
+      plane.setAttribute('visible', false);
+      plane.setAttribute('material', 'opacity', 0);
+      pano.setAttribute('visible', true);
       setScene(n);
       await fade(0, 450);
       busy = false;
@@ -144,7 +148,31 @@
     b1.addEventListener('click', function () { go(1); });
     b2.addEventListener('click', function () { go(2); });
     document.querySelectorAll('.clickable').forEach(function (el) {
-      el.addEventListener('click', function () { go(Number(el.getAttribute('data-go'))); });
+      el.addEventListener('click', function () { go(Number(el.getAttribute('data-go'))); });   // gaze-cursor (bril)
+    });
+
+    // Tikken/klikken op een stip: eigen straal van de camera door het tikpunt (telefoon + desktop).
+    var scene = document.querySelector('a-scene'), down = null;
+    var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    scene.addEventListener('loaded', function () {
+      var canvas = scene.canvas;
+      canvas.addEventListener('pointerdown', function (e) { down = [e.clientX, e.clientY]; });
+      canvas.addEventListener('pointerup', function (e) {
+        if (!down) return;
+        var moved = Math.hypot(e.clientX - down[0], e.clientY - down[1]); down = null;
+        if (moved > 10) return;                                   // dat was slepen, geen tik
+        var r = canvas.getBoundingClientRect();
+        ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(ndc, scene.camera);
+        var targets = [];
+        document.querySelectorAll('.clickable').forEach(function (el) {
+          var m = el.getObject3D('mesh'); if (m && el.object3D.visible && el.parentNode.object3D.visible) targets.push(m);
+        });
+        var hits = ray.intersectObjects(targets, false);
+        if (!hits.length) return;
+        var el = hits[0].object.el;
+        go(Number(el.getAttribute('data-go')));
+      });
     });
 
     // iOS geeft de gyroscoop pas vrij na een tik; Android meestal meteen.
