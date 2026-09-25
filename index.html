@@ -27,11 +27,12 @@
   <button id="b1" type="button" aria-pressed="true">1 Entree</button>
   <button id="b2" type="button" aria-pressed="false">2 Koelmeubel</button>
   <button id="motion" type="button" hidden>Bewegingssensor aanzetten</button>
-  <span class="hint" id="hint">Sleep of draai je telefoon. Tik op de oranje stip om verder te lopen; bij het meubel: tik op de greep.</span>
+  <span class="hint" id="hint">Sleep of draai je telefoon. Tik op de oranje stip om verder te lopen; bij het meubel: tik op de greep (in de bril: pak hem met je hand).</span>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"></script>
-<a-scene background="color: #0b0d10" vr-mode-ui="enabled: true" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true">
+<a-scene background="color: #0b0d10" vr-mode-ui="enabled: true" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true"
+         webxr="referenceSpaceType: local; requiredFeatures: local; optionalFeatures: hand-tracking, local-floor">
   <a-assets>
     <img id="p1" src="pano_test_1.jpg" crossorigin="anonymous">
     <img id="p2" src="opendeur_test_2.jpg" crossorigin="anonymous">
@@ -90,6 +91,12 @@
       <a-circle radius="0.8" material="shader: flat; opacity: 0.001; transparent: true; depthWrite: false" class="clickable" data-go="1"></a-circle>
     </a-entity>
   </a-entity>
+
+  <!-- Quest: eigen handen (hand tracking) en, als de controllers worden gepakt, een laser met trigger -->
+  <a-entity id="handL" hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #e9cfae"></a-entity>
+  <a-entity id="handR" hand-tracking-controls="hand: right; modelStyle: mesh; modelColor: #e9cfae"></a-entity>
+  <a-entity laser-controls="hand: left"  raycaster="objects: .clickable; far: 6" line="color: #f2a900; opacity: 0.6"></a-entity>
+  <a-entity laser-controls="hand: right" raycaster="objects: .clickable; far: 6" line="color: #f2a900; opacity: 0.6"></a-entity>
 
   <a-entity camera look-controls="reverseMouseDrag: true" position="0 0 0">
     <!-- Blik-cursor: alleen actief in de bril (zie enter-vr/exit-vr); in 2D doet de tik-straal het werk -->
@@ -183,6 +190,30 @@
     document.querySelectorAll('.clickable').forEach(function (el) {
       el.addEventListener('click', function () { act(el); });   // gaze-cursor (bril)
     });
+
+    // Hand tracking (Quest): knijpen vlak bij de greep, of de greep met een vingertop aanraken.
+    var greep = document.querySelector('#deur a-cylinder'), greepPos = new THREE.Vector3();
+    function bijGreep(p, afstand) { greep.object3D.getWorldPosition(greepPos); return p.distanceTo(greepPos) < afstand; }
+    ['handL', 'handR'].forEach(function (id) {
+      var h = document.getElementById(id);
+      h.addEventListener('pinchstarted', function (e) { if (e.detail && e.detail.position && bijGreep(e.detail.position, 0.18)) toggleDeur(); });
+    });
+    if (!AFRAME.components['greep-aanraking']) {
+      AFRAME.registerComponent('greep-aanraking', {
+        init: function () { this.binnen = { handL: false, handR: false }; },
+        tick: function () {
+          var self = this;
+          ['handL', 'handR'].forEach(function (id) {
+            var c = document.getElementById(id).components['hand-tracking-controls'];
+            if (!c || !c.indexTipPosition) return;
+            var raak = bijGreep(c.indexTipPosition, 0.07);
+            if (raak && !self.binnen[id]) toggleDeur();      // pas opnieuw na weggaan en terugkomen
+            self.binnen[id] = raak;
+          });
+        }
+      });
+    }
+    document.querySelector('a-scene').setAttribute('greep-aanraking', '');
 
     // Tikken/klikken op een stip: eigen straal van de camera door het tikpunt (telefoon + desktop).
     var scene = document.querySelector('a-scene'), down = null, gaze = document.getElementById('gaze');
