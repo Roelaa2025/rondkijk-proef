@@ -75,7 +75,7 @@
 
     // iOS geeft de gyroscoop pas vrij na een tik; Android meestal meteen.
     var motion = document.getElementById('motion'), hint = document.getElementById('hint');
-    var needsAsk = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+    var needsAsk = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function' && ('ontouchstart' in window);
     if (needsAsk) {
       motion.hidden = false;
       motion.addEventListener('click', function () {
