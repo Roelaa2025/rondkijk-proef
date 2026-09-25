@@ -24,17 +24,18 @@
 
 <div id="bar">
   <h1>Supermarkt-entree, rondkijk-proef</h1>
-  <button id="b1" type="button" aria-pressed="true">Variant 1</button>
-  <button id="b2" type="button" aria-pressed="false">Variant 2</button>
+  <button id="b1" type="button" aria-pressed="true">1 Entree</button>
+  <button id="b2" type="button" aria-pressed="false">2 Rauwkostschap</button>
   <button id="motion" type="button" hidden>Bewegingssensor aanzetten</button>
-  <span class="hint" id="hint">Sleep of draai je telefoon. Kijk naar de oranje stip om te wisselen.</span>
+  <span class="hint" id="hint">Sleep of draai je telefoon. Kijk naar de oranje stip om verder te lopen.</span>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"></script>
 <a-scene background="color: #0b0d10" vr-mode-ui="enabled: true" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true">
   <a-assets>
     <img id="p1" src="pano_test_1.jpg" crossorigin="anonymous">
-    <img id="p2" src="pano_test_2.jpg" crossorigin="anonymous">
+    <img id="p2" src="schap_test_2.jpg" crossorigin="anonymous">
+    <video id="walk" src="walk_test_1.mp4" preload="auto" muted playsinline webkit-playsinline crossorigin="anonymous"></video>
   </a-assets>
 
   <!-- Beeld is ~200° breed en ~85° hoog: een deel van de bol, gecentreerd recht vooruit (-z). -->
@@ -42,11 +43,30 @@
     geometry="primitive: sphere; radius: 50; segmentsWidth: 96; segmentsHeight: 48; phiStart: 170; phiLength: 200; thetaStart: 47.5; thetaLength: 85"
     material="shader: flat; side: back; src: #p1; repeat: -1 1; offset: 1 0"></a-entity>
 
-  <!-- Oranje stip op de saladewand: wisselt tussen de varianten -->
-  <a-entity id="hotspot" position="1.6 0.4 -9.6">
-    <a-ring color="#f2a900" radius-inner="0.18" radius-outer="0.26" material="shader: flat; opacity: .9" class="clickable"
+  <!-- Loopclip: vlak recht vooruit, alleen zichtbaar tijdens de overgang -->
+  <a-plane id="walkplane" visible="false" position="0 0 -6" width="10.7" height="6"
+           material="shader: flat; src: #walk; opacity: 0"></a-plane>
+
+  <!-- Zwarte bol dicht om de camera voor het in- en uitfaden -->
+  <a-sphere id="fader" radius="0.5" material="shader: flat; color: #000; side: back; opacity: 0; transparent: true; depthWrite: false"></a-sphere>
+
+  <!-- Scène 1: stip bij de saladewand -> loop naar scène 2 -->
+  <a-entity id="hs1" position="1.6 0.4 -9.6">
+    <a-ring color="#f2a900" radius-inner="0.18" radius-outer="0.26" material="shader: flat; opacity: .9" class="clickable" data-go="2"
             animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"></a-ring>
-    <a-circle color="#f2a900" radius="0.1" material="shader: flat" class="clickable"></a-circle>
+    <a-circle color="#f2a900" radius="0.1" material="shader: flat" class="clickable" data-go="2"></a-circle>
+  </a-entity>
+
+  <!-- Scène 2: labels boven de drie zones + stip om terug te lopen (links, richting de kratten) -->
+  <a-entity id="s2" visible="false">
+    <a-plane class="label" data-label="BASIS"     position="-6.4 2.6 -5.4" rotation="0 45 0"  width="3.2" height="0.8" material="shader: flat; transparent: true"></a-plane>
+    <a-plane class="label" data-label="SEIZOEN"   position="0.2 2.9 -8"    rotation="0 0 0"   width="3.2" height="0.8" material="shader: flat; transparent: true"></a-plane>
+    <a-plane class="label" data-label="INNOVATIE" position="6.5 2.6 -5.2"  rotation="0 -50 0" width="3.2" height="0.8" material="shader: flat; transparent: true"></a-plane>
+    <a-entity position="-8.5 -0.6 -3.5">
+      <a-ring color="#f2a900" radius-inner="0.18" radius-outer="0.26" material="shader: flat; opacity: .9" class="clickable" data-go="1"
+              animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"></a-ring>
+      <a-circle color="#f2a900" radius="0.1" material="shader: flat" class="clickable" data-go="1"></a-circle>
+    </a-entity>
   </a-entity>
 
   <a-entity camera look-controls="reverseMouseDrag: true" position="0 0 0">
@@ -58,19 +78,73 @@
 
 <script>
   (function () {
-    var current = 1;
-    var pano = document.getElementById('pano');
+    var current = 1, busy = false;
+    var pano = document.getElementById('pano'), fader = document.getElementById('fader');
+    var plane = document.getElementById('walkplane'), video = document.getElementById('walk');
+    var hs1 = document.getElementById('hs1'), s2 = document.getElementById('s2');
     var b1 = document.getElementById('b1'), b2 = document.getElementById('b2');
-    function show(n) {
+
+    function fade(to, ms) {
+      return new Promise(function (res) {
+        fader.removeAttribute('animation__fade');
+        fader.setAttribute('animation__fade', { property: 'material.opacity', to: to, dur: ms, easing: 'linear' });
+        setTimeout(res, ms + 30);
+      });
+    }
+    function setScene(n) {
       current = n;
       pano.setAttribute('material', 'src', '#p' + n);
+      hs1.setAttribute('visible', n === 1);
+      s2.setAttribute('visible', n === 2);
       b1.setAttribute('aria-pressed', String(n === 1));
       b2.setAttribute('aria-pressed', String(n === 2));
     }
-    b1.addEventListener('click', function () { show(1); });
-    b2.addEventListener('click', function () { show(2); });
+    function playWalk() {
+      return new Promise(function (res) {
+        var done = function () { video.removeEventListener('ended', done); res(); };
+        video.addEventListener('ended', done);
+        video.currentTime = 0;
+        plane.setAttribute('visible', true);
+        plane.setAttribute('material', 'opacity', 1);
+        var p = video.play();
+        if (p && p.catch) p.catch(function () { done(); });   // kan de clip niet starten: sla hem over
+        setTimeout(done, 8000);                                 // vangnet
+      });
+    }
+    async function go(n) {
+      if (busy || n === current) return;
+      busy = true;
+      await fade(1, 350);
+      if (n === 2) {                       // vooruit: met loopclip
+        pano.setAttribute('visible', false);
+        await fade(0, 250);
+        await playWalk();
+        await fade(1, 250);
+        plane.setAttribute('visible', false);
+        plane.setAttribute('material', 'opacity', 0);
+        pano.setAttribute('visible', true);
+      }
+      setScene(n);
+      await fade(0, 450);
+      busy = false;
+    }
+    // Labels als canvas-textuur: geen extern lettertype nodig.
+    document.querySelectorAll('.label').forEach(function (el, i) {
+      var c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+      var g = c.getContext('2d');
+      g.fillStyle = 'rgba(11,13,16,.72)'; g.beginPath(); g.roundRect(0, 0, 1024, 256, 48); g.fill();
+      g.fillStyle = '#f2a900'; g.fillRect(0, 216, 1024, 12);
+      g.fillStyle = '#f2efe8'; g.font = '600 120px system-ui, Segoe UI, Arial, sans-serif';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(el.getAttribute('data-label'), 512, 118);
+      var apply = function () { el.setAttribute('material', 'src', c.toDataURL('image/png')); };
+      if (el.hasLoaded) apply(); else el.addEventListener('loaded', apply);
+    });
+
+    b1.addEventListener('click', function () { go(1); });
+    b2.addEventListener('click', function () { go(2); });
     document.querySelectorAll('.clickable').forEach(function (el) {
-      el.addEventListener('click', function () { show(current === 1 ? 2 : 1); });
+      el.addEventListener('click', function () { go(Number(el.getAttribute('data-go'))); });
     });
 
     // iOS geeft de gyroscoop pas vrij na een tik; Android meestal meteen.
