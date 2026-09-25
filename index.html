@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Rondkijk-proef</title>
+<style>
+  :root { --bg:#0b0d10; --fg:#f2efe8; --muted:#9aa0a6; --accent:#f2a900; color-scheme: dark; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow:hidden; }
+  #bar { position:fixed; top:0; left:0; right:0; z-index:10; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+         padding: calc(8px + env(safe-area-inset-top,0px)) 16px 8px; background:linear-gradient(rgba(11,13,16,.85), rgba(11,13,16,0)); pointer-events:none; }
+  #bar h1 { font-size:14px; font-weight:600; margin:0; letter-spacing:.02em; }
+  #bar .hint { color:var(--muted); }
+  #bar button { pointer-events:auto; background:rgba(255,255,255,.08); color:var(--fg); border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:6px 12px; font:inherit; cursor:pointer; }
+  #bar button[aria-pressed="true"] { background:var(--accent); color:#1a1200; border-color:var(--accent); }
+  #bar button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  a-scene { position:fixed; inset:0; }
+</style>
+</head>
+<body>
+
+
+<div id="bar">
+  <h1>Supermarkt-entree, rondkijk-proef</h1>
+  <button id="b1" type="button" aria-pressed="true">Variant 1</button>
+  <button id="b2" type="button" aria-pressed="false">Variant 2</button>
+  <button id="motion" type="button" hidden>Bewegingssensor aanzetten</button>
+  <span class="hint" id="hint">Sleep of draai je telefoon. Kijk naar de oranje stip om te wisselen.</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"></script>
+<a-scene background="color: #0b0d10" vr-mode-ui="enabled: true" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true">
+  <a-assets>
+    <img id="p1" src="pano_test_1.jpg" crossorigin="anonymous">
+    <img id="p2" src="pano_test_2.jpg" crossorigin="anonymous">
+  </a-assets>
+
+  <!-- Beeld is ~200° breed en ~85° hoog: een deel van de bol, gecentreerd recht vooruit (-z). -->
+  <a-entity id="pano"
+    geometry="primitive: sphere; radius: 50; segmentsWidth: 96; segmentsHeight: 48; phiStart: 170; phiLength: 200; thetaStart: 47.5; thetaLength: 85"
+    material="shader: flat; side: back; src: #p1; repeat: -1 1; offset: 1 0"></a-entity>
+
+  <!-- Oranje stip op de saladewand: wisselt tussen de varianten -->
+  <a-entity id="hotspot" position="1.6 0.4 -9.6">
+    <a-ring color="#f2a900" radius-inner="0.18" radius-outer="0.26" material="shader: flat; opacity: .9" class="clickable"
+            animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"></a-ring>
+    <a-circle color="#f2a900" radius="0.1" material="shader: flat" class="clickable"></a-circle>
+  </a-entity>
+
+  <a-entity camera look-controls="reverseMouseDrag: true" position="0 0 0">
+    <a-cursor fuse="true" fuse-timeout="1200" color="#f2a900" raycaster="objects: .clickable"
+              animation__fusing="property: scale; startEvents: fusing; from: 1 1 1; to: 0.4 0.4 0.4; dur: 1200"
+              animation__reset="property: scale; startEvents: mouseleave; to: 1 1 1; dur: 150"></a-cursor>
+  </a-entity>
+</a-scene>
+
+<script>
+  (function () {
+    var current = 1;
+    var pano = document.getElementById('pano');
+    var b1 = document.getElementById('b1'), b2 = document.getElementById('b2');
+    function show(n) {
+      current = n;
+      pano.setAttribute('material', 'src', '#p' + n);
+      b1.setAttribute('aria-pressed', String(n === 1));
+      b2.setAttribute('aria-pressed', String(n === 2));
+    }
+    b1.addEventListener('click', function () { show(1); });
+    b2.addEventListener('click', function () { show(2); });
+    document.querySelectorAll('.clickable').forEach(function (el) {
+      el.addEventListener('click', function () { show(current === 1 ? 2 : 1); });
+    });
+
+    // iOS geeft de gyroscoop pas vrij na een tik; Android meestal meteen.
+    var motion = document.getElementById('motion'), hint = document.getElementById('hint');
+    var needsAsk = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+    if (needsAsk) {
+      motion.hidden = false;
+      motion.addEventListener('click', function () {
+        DeviceOrientationEvent.requestPermission().then(function (state) {
+          if (state === 'granted') { motion.hidden = true; hint.textContent = 'Draai je telefoon om rond te kijken.'; }
+          else { hint.textContent = 'Geen toestemming voor de bewegingssensor; slepen werkt wel.'; }
+        }).catch(function () { hint.textContent = 'Bewegingssensor niet beschikbaar; slepen werkt wel.'; });
+      });
+    }
+  })();
+</script>
+
+</body>
+</html>
