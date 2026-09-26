@@ -279,10 +279,10 @@ w.use_nodes = True
 wn = w.node_tree
 bg = wn.nodes["Background"]
 env = wn.nodes.new("ShaderNodeTexEnvironment")
-env.image = bpy.data.images.load(os.path.join(UIT, "opendeur_test_2.jpg"))
+env.image = bpy.data.images.load(os.path.join(UIT, "pano360_2.jpg"))   # echte 360x180 (pano360.py)
 wn.links.new(env.outputs["Color"], bg.inputs["Color"])
 bg.inputs["Strength"].default_value = 0.45
-# de foto is ~200° breed, geen echte equirect: alleen voor licht/reflecties, niet in beeld (film transparant)
+# alleen voor licht/reflecties, niet in beeld (film transparant); beeldmidden = +Y, net als de camera
 
 bpy.ops.object.light_add(type="AREA", location=(0, AFSTAND-0.4, 1.4))
 l = bpy.context.active_object; l.data.energy = 160; l.data.size = 1.6; l.data.color = (1.0, 0.95, 0.88)

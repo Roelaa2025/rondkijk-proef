@@ -34,14 +34,16 @@
 <a-scene background="color: #0b0d10" vr-mode-ui="enabled: true" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true"
          webxr="referenceSpaceType: local; requiredFeatures: local; optionalFeatures: hand-tracking, local-floor">
   <a-assets>
-    <img id="p1" src="pano_test_1.jpg" crossorigin="anonymous">
-    <img id="p2" src="opendeur_test_2.jpg" crossorigin="anonymous">
+    <!-- Volledige 360x180-equirects: AI-panorama (200x85) exact in het midden, rest gegenereerd (blender/pano360.py) -->
+    <img id="p1" src="pano360_1.jpg" crossorigin="anonymous">
+    <img id="p2" src="pano360_2.jpg" crossorigin="anonymous">
     <video id="walk" src="walk_test_3.mp4" preload="auto" muted playsinline webkit-playsinline crossorigin="anonymous"></video>
   </a-assets>
 
-  <!-- Beeld is ~200° breed en ~85° hoog: een deel van de bol, gecentreerd recht vooruit (-z). -->
+  <!-- Volledige bol; beeldmidden recht vooruit (-z), zelfde hoekschaal als de oude 200x85-uitsnede,
+       dus stippen, labels en deur staan nog op dezelfde plek. -->
   <a-entity id="pano"
-    geometry="primitive: sphere; radius: 50; segmentsWidth: 96; segmentsHeight: 48; phiStart: 170; phiLength: 200; thetaStart: 47.5; thetaLength: 85"
+    geometry="primitive: sphere; radius: 50; segmentsWidth: 96; segmentsHeight: 48; phiStart: 90; phiLength: 360; thetaStart: 0; thetaLength: 180"
     material="shader: flat; side: back; src: #p1; repeat: -1 1; offset: 1 0"></a-entity>
 
   <!-- Scène 2, koelmeubel met echte KnapVers-bakjes: stereo-360 uit Blender (blender/koelmeubel.py),
