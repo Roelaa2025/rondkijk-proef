@@ -44,6 +44,10 @@
     geometry="primitive: sphere; radius: 50; segmentsWidth: 96; segmentsHeight: 48; phiStart: 170; phiLength: 200; thetaStart: 47.5; thetaLength: 85"
     material="shader: flat; side: back; src: #p1; repeat: -1 1; offset: 1 0"></a-entity>
 
+  <!-- Scène 2, koelmeubel met echte KnapVers-bakjes: stereo-360 uit Blender (blender/koelmeubel.py),
+       boven = linkeroog, onder = rechteroog, transparant buiten het meubel. Ligt óver de foto. -->
+  <a-entity id="meubel" visible="false" stereo-laag="src: koelmeubel_stereo.png; radius: 40"></a-entity>
+
   <!-- Loopclip: vlak recht vooruit, alleen zichtbaar tijdens de overgang -->
   <a-plane id="walkplane" visible="false" position="0 0 -6" width="10.7" height="6"
            material="shader: flat; src: #walk; opacity: 0"></a-plane>
@@ -107,6 +111,37 @@
 </a-scene>
 
 <script>
+  // Stereo-laag: één boven-onder-afbeelding (links boven, rechts onder) op een bol om de kijker.
+  // In de bril ziet elk oog zijn eigen helft (three.js: linkeroog laag 1, rechteroog laag 2);
+  // op een scherm zie je het linkeroog. Blender +Y (beeldmidden) = A-Frame -Z.
+  AFRAME.registerComponent('stereo-laag', {
+    schema: { src: { type: 'string' }, radius: { type: 'number', default: 40 } },
+    init: function () {
+      var el = this.el, data = this.data, self = this;
+      new THREE.TextureLoader().load(data.src, function (tex) {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.minFilter = THREE.LinearFilter;
+        self.meshes = [0, 1].map(function (oog) {
+          var t = oog === 0 ? tex : tex.clone();
+          t.repeat.set(-1, 0.5);                 // gespiegeld (van binnen bekeken) en één helft
+          t.offset.set(1, oog === 0 ? 0.5 : 0);   // boven = links, onder = rechts
+          t.needsUpdate = true;
+          var geo = new THREE.SphereGeometry(data.radius, 96, 48, THREE.MathUtils.degToRad(90), Math.PI * 2);
+          var mat = new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, transparent: true, depthWrite: false });
+          var m = new THREE.Mesh(geo, mat);
+          m.layers.set(oog + 1);
+          m.renderOrder = 1;
+          el.setObject3D('oog' + oog, m);
+          return m;
+        });
+      });
+      // Buiten de bril rendert de gewone camera alleen laag 0: zet daar het linkeroog bij.
+      var cam = document.querySelector('[camera]');
+      var zet = function () { var c = cam.getObject3D('camera'); if (c) c.layers.enable(1); };
+      if (cam.getObject3D('camera')) zet(); else cam.addEventListener('loaded', zet);
+    }
+  });
+
   (function () {
     var current = 1, busy = false;
     var pano = document.getElementById('pano'), fader = document.getElementById('fader');
@@ -127,6 +162,7 @@
       hs1.setAttribute('visible', n === 1);
       if (n === 1 && deurOpen) toggleDeur();
       s2.setAttribute('visible', n === 2);
+      document.getElementById('meubel').setAttribute('visible', n === 2);
       b1.setAttribute('aria-pressed', String(n === 1));
       b2.setAttribute('aria-pressed', String(n === 2));
     }
