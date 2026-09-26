@@ -14,9 +14,12 @@ import numpy as np
 
 BREED_GR, HOOG_GR = 200.0, 85.0      # dekking van het origineel
 
-def main(orig_pad, gen_pad, uit_pad, gen_hoog_gr=202.5, rand=70, kwaliteit=90):
+def main(orig_pad, gen_pad, uit_pad, gen_hoog_gr=202.5, rand=70, kwaliteit=90, breedte=None):
     o = Image.open(orig_pad).convert("RGB")
     g = Image.open(gen_pad).convert("RGB")
+    if breedte:                                     # vaste uitvoerbreedte (bv. 8192 = Quest-textuurlimiet)
+        ppg = breedte / 360.0
+        o = o.resize((int(round(BREED_GR * ppg)), int(round(HOOG_GR * ppg))), Image.LANCZOS)
     ppg = o.width / BREED_GR                        # pixels per graad (origineel)
     W, H = int(round(360 * ppg)), int(round(180 * ppg))
     # gegenereerd beeld: 360° breed, gen_hoog_gr hoog -> schalen en verticaal bijsnijden tot 180°
@@ -77,4 +80,5 @@ if __name__ == "__main__":
     gr = 202.5
     if "--graden" in sys.argv:
         gr = float(sys.argv[sys.argv.index("--graden") + 1])
-    main(args[0], args[1], args[2], gr)
+    br = int(sys.argv[sys.argv.index("--breedte") + 1]) if "--breedte" in sys.argv else None
+    main(args[0], args[1], args[2], gr, breedte=br)

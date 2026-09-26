@@ -27,17 +27,17 @@
   <button id="b1" type="button" aria-pressed="true">1 Entree</button>
   <button id="b2" type="button" aria-pressed="false">2 Koelmeubel</button>
   <button id="motion" type="button" hidden>Bewegingssensor aanzetten</button>
-  <span class="hint" id="hint">Sleep of draai je telefoon. Tik op de oranje stip om verder te lopen; bij het meubel: tik op de greep (in de bril: pak hem met je hand).</span>
+  <span class="hint" id="hint">Sleep of draai je telefoon. Tik op de oranje stip op het pad om naar de koelwand te lopen; bij het meubel: tik op de greep (in de bril: pak hem met je hand). Terug: draai je om, stip op het pad.</span>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"></script>
-<a-scene background="color: #0b0d10" vr-mode-ui="enabled: true" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true"
+<a-scene scherp background="color: #0b0d10" vr-mode-ui="enabled: true" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true"
          webxr="referenceSpaceType: local; requiredFeatures: local; optionalFeatures: hand-tracking, local-floor">
   <a-assets>
     <!-- Volledige 360x180-equirects: AI-panorama (200x85) exact in het midden, rest gegenereerd (blender/pano360.py) -->
-    <img id="p1" src="pano360_1.jpg" crossorigin="anonymous">
-    <img id="p2" src="pano360_2.jpg" crossorigin="anonymous">
-    <video id="walk" src="walk_test_3.mp4" preload="auto" muted playsinline webkit-playsinline crossorigin="anonymous"></video>
+    <img id="p1" src="pano360_1.jpg?v=3" crossorigin="anonymous">
+    <img id="p2" src="pano360_2.jpg?v=3" crossorigin="anonymous">
+    <video id="walk" src="walk_test_4.mp4?v=3" preload="auto" muted playsinline webkit-playsinline crossorigin="anonymous"></video>
   </a-assets>
 
   <!-- Volledige bol; beeldmidden recht vooruit (-z), zelfde hoekschaal als de oude 200x85-uitsnede,
@@ -48,7 +48,7 @@
 
   <!-- Scène 2, koelmeubel met echte KnapVers-bakjes: stereo-360 uit Blender (blender/koelmeubel.py),
        boven = linkeroog, onder = rechteroog, transparant buiten het meubel. Ligt óver de foto. -->
-  <a-entity id="meubel" visible="false" stereo-laag="src: koelmeubel_stereo.png; radius: 40"></a-entity>
+  <a-entity id="meubel" visible="false" stereo-laag="src: koelmeubel_stereo.png?v=3; radius: 40"></a-entity>
 
   <!-- Loopclip: vlak recht vooruit, alleen zichtbaar tijdens de overgang -->
   <a-plane id="walkplane" visible="false" position="0 0 -6" width="10.7" height="6"
@@ -57,8 +57,8 @@
   <!-- Zwarte bol dicht om de camera voor het in- en uitfaden -->
   <a-sphere id="fader" radius="0.5" material="shader: flat; color: #000; side: back; opacity: 0; transparent: true; depthWrite: false"></a-sphere>
 
-  <!-- Scène 1: stip bij de saladewand -> loop naar scène 2 -->
-  <a-entity id="hs1" position="1.6 0.4 -9.6">
+  <!-- Scène 1: stip op het pad, vlak voor de koelwand -> loop naar scène 2 -->
+  <a-entity id="hs1" position="0 -0.55 -7">
     <a-ring color="#f2a900" radius-inner="0.18" radius-outer="0.26" material="shader: flat; opacity: .9" class="clickable" data-go="2"
             animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"></a-ring>
     <a-circle color="#f2a900" radius="0.1" material="shader: flat" class="clickable" data-go="2"></a-circle>
@@ -67,30 +67,31 @@
 
   <!-- Scène 2: labels boven de drie zones + stip om terug te lopen (links, richting de kratten) -->
   <a-entity id="s2" visible="false">
-    <!-- Labels rechts naast het meubel, op schaphoogte -->
-    <a-plane class="label" data-label="INNOVATIE" position="0.86 0.30 -1.5"  rotation="0 -10 0" width="0.46" height="0.115" material="shader: flat; transparent: true"></a-plane>
-    <a-plane class="label" data-label="SEIZOEN"   position="0.86 -0.18 -1.5" rotation="0 -10 0" width="0.46" height="0.115" material="shader: flat; transparent: true"></a-plane>
-    <a-plane class="label" data-label="BASIS"     position="0.86 -0.72 -1.5" rotation="0 -10 0" width="0.46" height="0.115" material="shader: flat; transparent: true"></a-plane>
+    <!-- Labels rechts naast het module, op schaphoogte (module: opening 1,215 x 1,295 m op 1,2 m, midden -0,16) -->
+    <a-plane class="label" data-label="INNOVATIE" position="0.80 0.32 -1.2"  rotation="0 -12 0" width="0.40" height="0.10" material="shader: flat; transparent: true"></a-plane>
+    <a-plane class="label" data-label="SEIZOEN"   position="0.80 -0.12 -1.2" rotation="0 -12 0" width="0.40" height="0.10" material="shader: flat; transparent: true"></a-plane>
+    <a-plane class="label" data-label="BASIS"     position="0.80 -0.60 -1.2" rotation="0 -12 0" width="0.40" height="0.10" material="shader: flat; transparent: true"></a-plane>
 
-    <!-- 3D-deur: scharnier links (x=-0.43), opening 0,87 x 1,81 m op 1,48 m afstand, middenhoogte -0,20 -->
-    <a-entity id="deur" position="-0.43 -0.20 -1.48" rotation="0 0 0">
-      <a-entity position="0.435 0 0">
-        <a-plane width="0.87" height="1.81"
+    <!-- 3D-deur: scharnier links (x=-0.6075), opening 1,215 x 1,295 m op 1,2 m afstand, middenhoogte -0,16 -->
+    <a-entity id="deur" position="-0.6075 -0.16 -1.2" rotation="0 0 0">
+      <a-entity position="0.6075 0 0">
+        <a-plane width="1.215" height="1.295"
                  material="shader: flat; color: #dfe9f0; opacity: 0.16; transparent: true; side: double; depthWrite: false"></a-plane>
-        <a-plane width="0.87" height="1.81" position="0 0 -0.002"
+        <a-plane width="1.215" height="1.295" position="0 0 -0.002"
                  material="shader: flat; color: #ffffff; opacity: 0.06; transparent: true; side: double; depthWrite: false"></a-plane>
-        <a-box position="0 0.905 0" width="0.87" height="0.03" depth="0.035" color="#b9bcc0" material="shader: flat"></a-box>
-        <a-box position="0 -0.905 0" width="0.87" height="0.03" depth="0.035" color="#b9bcc0" material="shader: flat"></a-box>
-        <a-box position="-0.42 0 0" width="0.03" height="1.81" depth="0.035" color="#b9bcc0" material="shader: flat"></a-box>
-        <a-box position="0.42 0 0" width="0.03" height="1.81" depth="0.035" color="#b9bcc0" material="shader: flat"></a-box>
+        <a-box position="0 0.6475 0" width="1.215" height="0.03" depth="0.035" color="#b9bcc0" material="shader: flat"></a-box>
+        <a-box position="0 -0.6475 0" width="1.215" height="0.03" depth="0.035" color="#b9bcc0" material="shader: flat"></a-box>
+        <a-box position="-0.5925 0 0" width="0.03" height="1.295" depth="0.035" color="#b9bcc0" material="shader: flat"></a-box>
+        <a-box position="0.5925 0 0" width="0.03" height="1.295" depth="0.035" color="#b9bcc0" material="shader: flat"></a-box>
         <!-- greep rechts, met tikvlak -->
-        <a-cylinder class="clickable" data-action="deur" position="0.36 0 0.05" radius="0.014" height="0.34" color="#e6e6e6" material="shader: flat"></a-cylinder>
-        <a-box position="0.36 0.15 0.025" width="0.02" height="0.02" depth="0.05" color="#e6e6e6" material="shader: flat"></a-box>
-        <a-box position="0.36 -0.15 0.025" width="0.02" height="0.02" depth="0.05" color="#e6e6e6" material="shader: flat"></a-box>
-        <a-plane class="clickable" data-action="deur" position="0.36 0 0.06" width="0.16" height="0.5" material="shader: flat; opacity: 0.001; transparent: true; depthWrite: false"></a-plane>
+        <a-cylinder class="clickable" data-action="deur" position="0.53 0 0.05" radius="0.014" height="0.34" color="#e6e6e6" material="shader: flat"></a-cylinder>
+        <a-box position="0.53 0.15 0.025" width="0.02" height="0.02" depth="0.05" color="#e6e6e6" material="shader: flat"></a-box>
+        <a-box position="0.53 -0.15 0.025" width="0.02" height="0.02" depth="0.05" color="#e6e6e6" material="shader: flat"></a-box>
+        <a-plane class="clickable" data-action="deur" position="0.53 0 0.06" width="0.16" height="0.5" material="shader: flat; opacity: 0.001; transparent: true; depthWrite: false"></a-plane>
       </a-entity>
     </a-entity>
-    <a-entity position="-8.5 -0.6 -3.5">
+    <!-- terug: stip op het pad achter je -->
+    <a-entity position="0 -0.7 4.5" rotation="0 180 0">
       <a-ring color="#f2a900" radius-inner="0.18" radius-outer="0.26" material="shader: flat; opacity: .9" class="clickable" data-go="1"
               animation="property: scale; to: 1.15 1.15 1.15; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"></a-ring>
       <a-circle color="#f2a900" radius="0.1" material="shader: flat" class="clickable" data-go="1"></a-circle>
@@ -142,6 +143,27 @@
       var zet = function () { var c = cam.getObject3D('camera'); if (c) c.layers.enable(1); };
       if (cam.getObject3D('camera')) zet(); else cam.addEventListener('loaded', zet);
     }
+  });
+
+  // Scherpte in de bril: de Quest-browser rendert standaard onder de schermresolutie en
+  // filtert texturen niet anisotroop (schuine vlakken worden wazig). Beide omhoog.
+  AFRAME.registerComponent('scherp', {
+    init: function () {
+      var scene = this.el;
+      var zet = function () {
+        var r = scene.renderer; if (!r) return;
+        if (r.xr && r.xr.setFramebufferScaleFactor) r.xr.setFramebufferScaleFactor(1.6);
+        if (r.xr && r.xr.setFoveation) r.xr.setFoveation(0.4);
+        var maxA = r.capabilities.getMaxAnisotropy();
+        scene.object3D.traverse(function (o) {
+          if (o.material && o.material.map && o.material.map.anisotropy !== maxA) { o.material.map.anisotropy = maxA; o.material.map.needsUpdate = true; }
+        });
+      };
+      scene.addEventListener('loaded', zet);
+      scene.addEventListener('materialtextureloaded', zet);
+      this.zet = zet;
+    },
+    tick: function (t) { if (!this._laatst || t - this._laatst > 2000) { this._laatst = t; this.zet(); } }
   });
 
   (function () {

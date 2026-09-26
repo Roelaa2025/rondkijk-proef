@@ -20,13 +20,15 @@ DETAIL = "--detail" in sys.argv     # gewone camera vlak voor het middelste scha
 random.seed(7)
 
 # ---------- maten (m) ----------
-AFSTAND = 1.48          # ogen -> voorkant meubel
-MIDDEN_Y = -0.20        # middenhoogte opening t.o.v. ogen
-OPEN_B, OPEN_H = 0.87, 1.81
-KAST_B = 1.16           # buitenmaat kolom (geel), zoals in de foto
+# Ingemeten in bron_meubel.jpg (sessie 13): gele stijlen op -30,3..-27,7 en 27,5..30,0 graden,
+# opening boven +22,0 / onder -34,0 graden, koppaneel tot +38,3 graden; aangenomen 1,2 m afstand.
+AFSTAND = 1.20          # ogen -> voorkant meubel
+MIDDEN_Y = -0.16        # middenhoogte opening t.o.v. ogen
+OPEN_B, OPEN_H = 1.215, 1.295
+KAST_B = 1.335          # buitenmaat module incl. gele stijlen
 KAST_D = 0.62
-KAST_H_ONDER = MIDDEN_Y - OPEN_H / 2 - 0.22   # gele sokkel
-KAST_H_BOVEN = MIDDEN_Y + OPEN_H / 2 + 0.55   # kop met donker paneel
+KAST_H_ONDER = MIDDEN_Y - OPEN_H / 2 - 0.34   # sokkel (loopt in de foto door tot onder beeld)
+KAST_H_BOVEN = 0.95                            # kop met donker paneel (+38,3 graden op 1,2 m)
 WAND = (KAST_B - OPEN_B) / 2
 BAK_D = 0.115           # Ø bakje (Ilpra: 4-voudig formaatdeel Ø115)
 BAK_H = 0.060
