@@ -8,7 +8,7 @@
 #
 # Assen: Blender Z omhoog, camera in de oorsprong op ooghoogte, kijkt langs +Y (= A-Frame -Z).
 
-import bpy, bmesh, math, os, sys, random, json
+import bpy, bmesh, math, os, sys, random, json, glob
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(HIER, "assets")
@@ -120,19 +120,21 @@ M_BINNEN = mat("binnen", (0.035, 0.035, 0.04, 1), ruw=0.65)        # zwarte binn
 M_SCHAP = mat("schap", (0.55, 0.56, 0.58, 1), ruw=0.4, metaal=0.7)
 M_ALU = mat("alu", (0.75, 0.76, 0.78, 1), ruw=0.3, metaal=0.9)
 M_GLAS = mat("glas", (0.9, 0.95, 1.0, 1), ruw=0.05, alpha=0.12)
-M_LED = mat("led", (1.0, 0.98, 0.93, 1), emissie=25.0)
+M_LED = mat("led", (1.0, 0.98, 0.93, 1), emissie=10.0)
 M_RAIL = mat("rail", (0.93, 0.93, 0.93, 1), ruw=0.5)
-M_KAART = mat("kaart", (1.0, 1.0, 1.0, 1), ruw=0.6)
 M_KAART_ROOD = mat("kaart_rood", (0.85, 0.08, 0.08, 1), ruw=0.6)
-M_PP = mat("pp", (0.97, 0.98, 1.0, 1), ruw=0.18, alpha=0.07, spec=0.25)
-M_PET = mat("pet", (0.98, 0.99, 1.0, 1), ruw=0.08, alpha=0.1, spec=0.4)
+M_PP = mat("pp", (0.97, 0.98, 1.0, 1), ruw=0.2, alpha=0.04, spec=0.15)
+M_PET = mat("pet", (0.98, 0.99, 1.0, 1), ruw=0.1, alpha=0.05, spec=0.25)
 M_STRIP = {"basis": mat("s_basis", (0.52, 0.5, 0.47, 1)), "seizoen": mat("s_seizoen", (0.35, 0.55, 0.25, 1)),
            "innovatie": mat("s_innov", (0.14, 0.42, 0.25, 1))}
 
-salades = {"basis": ["salade_salade-van-het-huis", "salade_coleslaw"],
-           "seizoen": ["salade_rode-bieten-salade", "salade_waldorf-salade", "salade_rode-kool-salade"],
-           "innovatie": ["salade_eitje-preitje", "salade_broccoli-salade"]}
-alle_sal = [n for l in salades.values() for n in l]
+# Producten uit de echte KnapVers-productfoto's (blender/maak_texturen.py -> assets/prod_*_top/zij.png + producten.json)
+producten = json.load(open(os.path.join(ASSETS, "producten.json")))
+rauwkost = [p["sleutel"] for p in producten if p["cat"] == "rauwkost"]
+fruit = [p["sleutel"] for p in producten if p["cat"] == "fruit"]
+salades = {"basis": rauwkost[0:4], "seizoen": rauwkost[4:8], "innovatie": rauwkost[8:12]}
+alle_sal = rauwkost + fruit
+kaartjes = sorted(glob.glob(os.path.join(ASSETS, "kaart_*.png")))
 etiket = {"basis": "basis_heerlijk-bijgerecht", "seizoen": "seizoen_herfst-special", "innovatie": "innovatie_100-gram-groente"}
 m_top = {n: mat_img(n + "_t", os.path.join(ASSETS, n + "_top.png"), 0.75, alpha=True) for n in alle_sal}
 m_zij = {n: mat_img(n + "_z", os.path.join(ASSETS, n + "_zij.png"), 0.85, repeat=True) for n in alle_sal}
@@ -200,10 +202,15 @@ for i in range(N_SCHAP):
         n_k = 7 if mnr == 1 else 8
         for k in range(n_k):
             xk = xm - MOD_B / 2 + 0.03 + (MOD_B - 0.06) * (k + 0.5) / n_k
-            rood = (mnr != 1 and random.random() < 0.18)
-            ouder(doos(f"kaart_{mnr}_{i}_{k}", (xk, y0 + 0.048, z_s - 0.018), (0.07, 0.002, 0.032), M_KAART_ROOD if rood else M_KAART))
-            ouder(doos(f"kaarttekst_{mnr}_{i}_{k}", (xk, y0 + 0.046, z_s - 0.012), (0.05, 0.001, 0.004), M_BINNEN))
-            ouder(doos(f"kaartprijs_{mnr}_{i}_{k}", (xk - 0.012, y0 + 0.046, z_s - 0.026), (0.03, 0.001, 0.009), M_BINNEN if not rood else M_KAART))
+            rood = (mnr != 1 and random.random() < 0.15)
+            if rood:
+                ouder(doos(f"kaart_{mnr}_{i}_{k}", (xk, y0 + 0.048, z_s - 0.018), (0.07, 0.002, 0.032), M_KAART_ROOD))
+            else:
+                # echt kaartje (naam, gewicht, prijs, barcode) als textuur op een vlak op de rail
+                kp = kaartjes[(k + i * 3 + mnr * 7) % len(kaartjes)]
+                bpy.ops.mesh.primitive_plane_add(size=1, location=(xk, y0 + 0.047, z_s - 0.018), rotation=(math.radians(90), 0, 0))
+                kv = bpy.context.active_object; kv.name = f"kaart_{mnr}_{i}_{k}"; kv.scale = (0.07, 0.032, 1)
+                kv.data.materials.append(mat_img(f"kaartmat_{mnr}_{i}_{k}", kp, 0.6)); ouder(kv)
         if mnr == 1:
             ouder(doos(f"strip_{i}", (xm, y0 + 0.049, z_s - 0.041), (MOD_B - 0.06, 0.003, 0.008), M_STRIP[laag]))
         # led onder de plank, naar voren
@@ -224,9 +231,9 @@ for i in range(N_SCHAP):
                     sal = salades[laag][k % len(salades[laag])]
                     bakje(f"b{mnr}_{i}_{r}_{k}", (x, y, z), laag, sal, random.uniform(-0.1, 0.1))
                 else:
-                    # buurmodules: fruit (links) en overig (rechts) — zelfde bakjes, andere salades en PET-helder;
-                    # fruit gestapeld twee hoog zoals in de foto
-                    sal = alle_sal[(k + i + mnr * 3) % len(alle_sal)]
+                    # buurmodules: fruit (links, PET-helder, gestapeld twee hoog zoals in de foto) en overige rauwkost (rechts)
+                    lijst = fruit if mnr == 0 else rauwkost
+                    sal = lijst[(k // 2 + i * 2 + r) % len(lijst)]
                     bakje(f"b{mnr}_{i}_{r}_{k}", (x, y, z), lagen[(i + 1) % 5], sal, random.uniform(-0.3, 0.3), M_PET)
                     if mnr == 0 and i < 3 and random.random() < 0.7:
                         bakje(f"b{mnr}_{i}_{r}_{k}_2", (x, y, z + BAK_H + 0.009), lagen[(i + 2) % 5], sal, random.uniform(-0.3, 0.3), M_PET)
@@ -237,13 +244,13 @@ wn = w.node_tree; bg = wn.nodes["Background"]
 env = wn.nodes.new("ShaderNodeTexEnvironment"); env.image = bpy.data.images.load(os.path.join(UIT, "pano360_2.jpg"))
 wn.links.new(env.outputs["Color"], bg.inputs["Color"]); bg.inputs["Strength"].default_value = 0.4
 bpy.ops.object.light_add(type="AREA", location=(0, AFSTAND - 0.5, 1.5))
-l = bpy.context.active_object; l.data.energy = 120; l.data.size = 2.5; l.data.color = (1.0, 0.96, 0.9); l.rotation_euler = (math.radians(30), 0, 0)
+l = bpy.context.active_object; l.data.energy = 55; l.data.size = 2.5; l.data.color = (1.0, 0.96, 0.9); l.rotation_euler = (math.radians(30), 0, 0)
 
 # ---------- camera + render ----------
 bpy.ops.object.camera_add(location=(0, 0, 0), rotation=(math.radians(90), 0, 0))
 cam = bpy.context.active_object; sc.camera = cam
 sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"; sc.cycles.use_denoising = True; sc.cycles.denoiser = "OPENIMAGEDENOISE"
-sc.cycles.max_bounces = 6; sc.cycles.transparent_max_bounces = 16
+sc.cycles.max_bounces = 4; sc.cycles.transparent_max_bounces = 8
 sc.render.image_settings.file_format = "PNG"; sc.render.image_settings.compression = 60
 if STILL:
     cam.data.type = "PERSP"; cam.data.lens = 28

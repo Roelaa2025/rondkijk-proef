@@ -1,0 +1,122 @@
+[
+ {
+  "sleutel": "prod_02302",
+  "cat": "fruit",
+  "naam": "Watermeloen",
+  "prijs": "2.29"
+ },
+ {
+  "sleutel": "prod_02326",
+  "cat": "fruit",
+  "naam": "Granaatappel",
+  "prijs": "2.99"
+ },
+ {
+  "sleutel": "prod_02332",
+  "cat": "fruit",
+  "naam": "Meloen",
+  "prijs": "2.29"
+ },
+ {
+  "sleutel": "prod_02348",
+  "cat": "fruit",
+  "naam": "Fruitsalade",
+  "prijs": "2.79"
+ },
+ {
+  "sleutel": "prod_02355",
+  "cat": "fruit",
+  "naam": "Fruitmix",
+  "prijs": "2.79"
+ },
+ {
+  "sleutel": "prod_02369",
+  "cat": "fruit",
+  "naam": "Fruitsalade groot",
+  "prijs": "3.49"
+ },
+ {
+  "sleutel": "prod_02372",
+  "cat": "fruit",
+  "naam": "Fruitsalade kiwi",
+  "prijs": "2.79"
+ },
+ {
+  "sleutel": "prod_02390",
+  "cat": "fruit",
+  "naam": "Ananas mix",
+  "prijs": "2.79"
+ },
+ {
+  "sleutel": "prod_02152",
+  "cat": "rauwkost",
+  "naam": "Waldorf salade",
+  "prijs": "2.49"
+ },
+ {
+  "sleutel": "prod_02180",
+  "cat": "rauwkost",
+  "naam": "Salade van het huis",
+  "prijs": "1.99"
+ },
+ {
+  "sleutel": "prod_02194",
+  "cat": "rauwkost",
+  "naam": "Witte kool salade",
+  "prijs": "1.79"
+ },
+ {
+  "sleutel": "prod_02204",
+  "cat": "rauwkost",
+  "naam": "Eitje preitje",
+  "prijs": "2.19"
+ },
+ {
+  "sleutel": "prod_02237",
+  "cat": "rauwkost",
+  "naam": "Rode bieten salade",
+  "prijs": "1.99"
+ },
+ {
+  "sleutel": "prod_02248",
+  "cat": "rauwkost",
+  "naam": "Coleslaw",
+  "prijs": "1.79"
+ },
+ {
+  "sleutel": "prod_02262",
+  "cat": "rauwkost",
+  "naam": "Boerenkool salade",
+  "prijs": "2.19"
+ },
+ {
+  "sleutel": "prod_02277",
+  "cat": "rauwkost",
+  "naam": "Rode kool salade",
+  "prijs": "1.99"
+ },
+ {
+  "sleutel": "prod_02288",
+  "cat": "rauwkost",
+  "naam": "Waldorf salade",
+  "prijs": "2.49"
+ },
+ {
+  "sleutel": "prod_02572",
+  "cat": "rauwkost",
+  "naam": "Rode kool appel",
+  "prijs": "1.99"
+ },
+ {
+  "sleutel": "prod_02580",
+  "cat": "rauwkost",
+  "naam": "Rode kool",
+  "prijs": "1.79"
+ },
+ {
+  "sleutel": "prod_02591",
+  "cat": "rauwkost",
+  "naam": "Selderij salade",
+  "prijs": "2.19"
+ }
+]
